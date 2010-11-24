@@ -26,6 +26,7 @@ setup(name='collective.contentrules.talesaction',
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
+          'plone.app.contentrules',
       ],
       entry_points="""
       # -*- Entry points: -*-
