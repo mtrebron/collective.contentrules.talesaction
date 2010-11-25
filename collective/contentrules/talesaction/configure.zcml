@@ -8,6 +8,8 @@
 
   <i18n:registerTranslations directory="locales" />
 
+  <include package="plone.app.contentrules" />
+
   <five:registerPackage package="." initialize=".initialize" />
 
   <adapter factory=".action.TalesExpressionActionExecutor" />
