@@ -4,8 +4,8 @@ Changelog
 1.1 (unreleased)
 ----------------
 
-- Nothing changed yet.
-
+- Fix to return the action response to allow rules engine to continue
+  [datakurre]
 
 1.0 (2011-04-13)
 ----------------
