@@ -64,7 +64,7 @@ class TalesExpressionActionExecutor(object):
         portal = getToolByName(folder, 'portal_url').getPortalObject()
         expression = self.element.tales_expression
         ec = createExprContext(folder, portal, object)
-        Expression(expression)(ec)
+        return Expression(expression)(ec)
 
 
 class TalesExpressionAddForm(AddForm):
