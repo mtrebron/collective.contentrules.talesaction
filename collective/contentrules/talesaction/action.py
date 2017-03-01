@@ -15,12 +15,15 @@ from Products.CMFPlone import utils
 from Products.statusmessages.interfaces import IStatusMessage
 
 from plone.contentrules.rule.interfaces import IExecutable, IRuleElementData
-from plone.app.form.widgets.uberselectionwidget import UberSelectionWidget
 from plone.app.contentrules import PloneMessageFactory as PMF
 from plone.app.contentrules.browser.formhelper import AddForm, EditForm
-from plone.app.vocabularies.catalog import SearchableTextSourceBinder
+from plone.app.vocabularies.catalog import CatalogSource
 
 from collective.contentrules.talesaction import MessageFactory as _
+
+import logging
+
+log = logging.getLogger(__name__)
 
 class ITalesExpressionAction(Interface):
     """Interface for the configurable aspects of a move action.
@@ -63,6 +66,7 @@ class TalesExpressionActionExecutor(object):
         folder = self.context
         portal = getToolByName(folder, 'portal_url').getPortalObject()
         expression = self.element.tales_expression
+        log.info(expression)        
         ec = createExprContext(folder, portal, object)
         return Expression(expression)(ec)
 
@@ -72,6 +76,7 @@ class TalesExpressionAddForm(AddForm):
     """
     form_fields = form.FormFields(ITalesExpressionAction)
     label = _(u"Add TALES Expression Action")
+    schema = ITalesExpressionAction    
     description = _(u"Executes a TALES Expression when the rule applies.")
     form_name = PMF(u"Configure element")
 
@@ -86,5 +91,6 @@ class TalesExpressionEditForm(EditForm):
     """
     form_fields = form.FormFields(ITalesExpressionAction)
     label = _(u"Edit TALES Expression Action")
+    schema = ITalesExpressionAction
     description = _(u"Executes a TALES Expression when the rule applies.")
     form_name = PMF(u"Configure element")
