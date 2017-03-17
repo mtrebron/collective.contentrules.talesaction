@@ -10,16 +10,21 @@ import OFS.subscribers
 from OFS.event import ObjectClonedEvent
 from OFS.SimpleItem import SimpleItem
 from Products.CMFCore.utils import getToolByName
-from Products.CMFCore.Expression import Expression, createExprContext
+from Products.CMFCore.Expression import Expression, createExprContext, getExprContext
 from Products.CMFPlone import utils
 from Products.statusmessages.interfaces import IStatusMessage
 
 from plone.contentrules.rule.interfaces import IExecutable, IRuleElementData
+#from plone.app.form.widgets.uberselectionwidget import UberSelectionWidget
 from plone.app.contentrules import PloneMessageFactory as PMF
 from plone.app.contentrules.browser.formhelper import AddForm, EditForm
+#from plone.app.vocabularies.catalog import SearchableTextSourceBinder
 from plone.app.vocabularies.catalog import CatalogSource
 
 from collective.contentrules.talesaction import MessageFactory as _
+
+#TALES EXPRESSION -see: https://scm.adullact.net/anonscm/svn/icea/products/Drac33/trunk/contentrules.py
+#from Products.CMFCore.Expression import Expression, getExprContext
 
 import logging
 
@@ -46,7 +51,7 @@ class TalesExpressionAction(SimpleItem):
 
     @property
     def summary(self):
-        return PMF(u"TALES expression is: ${tales_expression}",
+        return _(u"TALES expression is: ${tales_expression}",
                  mapping=dict(tales_expression=self.tales_expression))
 
 
@@ -66,9 +71,13 @@ class TalesExpressionActionExecutor(object):
         folder = self.context
         portal = getToolByName(folder, 'portal_url').getPortalObject()
         expression = self.element.tales_expression
-        log.info(expression)        
-        ec = createExprContext(folder, portal, object)
-        return Expression(expression)(ec)
+        
+        #log.info('\n\n\n%s %s\n\n\n' % (object.getId(), expression))
+        
+        #ec = createExprContext(folder, portal, object)
+        #Expression(expression)(ec)
+        context = getExprContext(object,object)
+        Expression(expression)(context)
 
 
 class TalesExpressionAddForm(AddForm):
@@ -76,9 +85,9 @@ class TalesExpressionAddForm(AddForm):
     """
     form_fields = form.FormFields(ITalesExpressionAction)
     label = _(u"Add TALES Expression Action")
-    schema = ITalesExpressionAction    
+    schema = ITalesExpressionAction
     description = _(u"Executes a TALES Expression when the rule applies.")
-    form_name = PMF(u"Configure element")
+    form_name = _(u"Configure element")
 
     def create(self, data):
         a = TalesExpressionAction()
@@ -91,6 +100,6 @@ class TalesExpressionEditForm(EditForm):
     """
     form_fields = form.FormFields(ITalesExpressionAction)
     label = _(u"Edit TALES Expression Action")
-    schema = ITalesExpressionAction
+    schema = ITalesExpressionAction    
     description = _(u"Executes a TALES Expression when the rule applies.")
-    form_name = PMF(u"Configure element")
+    form_name = _(u"Configure element")
