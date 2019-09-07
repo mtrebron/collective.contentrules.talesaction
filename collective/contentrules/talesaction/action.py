@@ -1,34 +1,18 @@
-from zope.component import adapts
+from plone import api
 from zope.event import notify
-from zope.formlib import form
-from zope.interface import implements, Interface
-from zope.lifecycleevent import ObjectCopiedEvent
+from zope.interface import Interface
+from zope.component import adapter
+from zope.interface import implementer
 from zope import schema
-
-from Acquisition import aq_base
-import OFS.subscribers
-from OFS.event import ObjectClonedEvent
 from OFS.SimpleItem import SimpleItem
-from Products.CMFCore.utils import getToolByName
-from Products.CMFCore.Expression import Expression, createExprContext, getExprContext
-from Products.CMFPlone import utils
-from Products.statusmessages.interfaces import IStatusMessage
-
+from Products.CMFCore.Expression import Expression
+from Products.CMFCore.Expression import getExprContext
 from plone.contentrules.rule.interfaces import IExecutable, IRuleElementData
-#from plone.app.form.widgets.uberselectionwidget import UberSelectionWidget
-from plone.app.contentrules import PloneMessageFactory as PMF
-from plone.app.contentrules.browser.formhelper import AddForm, EditForm
-#from plone.app.vocabularies.catalog import SearchableTextSourceBinder
-from plone.app.vocabularies.catalog import CatalogSource
-
+from plone.app.contentrules.actions import ActionAddForm
+from plone.app.contentrules.actions import ActionEditForm
+from plone.app.contentrules.browser.formhelper import ContentRuleFormWrapper
 from collective.contentrules.talesaction import MessageFactory as _
 
-#TALES EXPRESSION -see: https://scm.adullact.net/anonscm/svn/icea/products/Drac33/trunk/contentrules.py
-#from Products.CMFCore.Expression import Expression, getExprContext
-
-import logging
-
-log = logging.getLogger(__name__)
 
 class ITalesExpressionAction(Interface):
     """Interface for the configurable aspects of a move action.
@@ -41,11 +25,11 @@ class ITalesExpressionAction(Interface):
                               required=True,
                               )
 
+
+@implementer(ITalesExpressionAction, IRuleElementData)
 class TalesExpressionAction(SimpleItem):
     """The actual persistent implementation of the action element.
     """
-    implements(ITalesExpressionAction, IRuleElementData)
-
     tales_expression = ''
     element = 'plone.actions.TalesExpression'
 
@@ -55,11 +39,14 @@ class TalesExpressionAction(SimpleItem):
                  mapping=dict(tales_expression=self.tales_expression))
 
 
+@adapter(Interface, ITalesExpressionAction, Interface)
+@implementer(IExecutable)
 class TalesExpressionActionExecutor(object):
     """The executor for this action.
+
+        use getExprContext rather than createExprContext
+        see: https://scm.adullact.net/anonscm/svn/icea/products/Drac33/trunk/contentrules.py
     """
-    implements(IExecutable)
-    adapts(Interface, ITalesExpressionAction, Interface)
 
     def __init__(self, context, element, event):
         self.context = context
@@ -69,37 +56,36 @@ class TalesExpressionActionExecutor(object):
     def __call__(self):
         object = self.event.object
         folder = self.context
-        portal = getToolByName(folder, 'portal_url').getPortalObject()
+        portal = api.portal.get()
         expression = self.element.tales_expression
-        
-        #log.info('\n\n\n%s %s\n\n\n' % (object.getId(), expression))
-        
-        #ec = createExprContext(folder, portal, object)
-        #Expression(expression)(ec)
         context = getExprContext(object,object)
         Expression(expression)(context)
 
 
-class TalesExpressionAddForm(AddForm):
+class TalesExpressionAddForm(ActionAddForm):
     """An add form for tales expression action.
     """
-    form_fields = form.FormFields(ITalesExpressionAction)
-    label = _(u"Add TALES Expression Action")
     schema = ITalesExpressionAction
+    label = _(u"Add TALES Expression Action")
     description = _(u"Executes a TALES Expression when the rule applies.")
     form_name = _(u"Configure element")
-
-    def create(self, data):
-        a = TalesExpressionAction()
-        form.applyChanges(a, self.form_fields, data)
-        return a
+    Type = TalesExpressionAction
 
 
-class TalesExpressionEditForm(EditForm):
+class TalesExpressionAddFormView(ContentRuleFormWrapper):
+    form = TalesExpressionAddForm
+
+
+class TalesExpressionEditForm(ActionEditForm):
     """An edit form for TALES expression actions.
+
+    z3c.form does all the magic here.
     """
-    form_fields = form.FormFields(ITalesExpressionAction)
+    schema = ITalesExpressionAction
     label = _(u"Edit TALES Expression Action")
-    schema = ITalesExpressionAction    
     description = _(u"Executes a TALES Expression when the rule applies.")
     form_name = _(u"Configure element")
+
+
+class TalesExpressionEditFormView(ContentRuleFormWrapper):
+    form = TalesExpressionEditForm
